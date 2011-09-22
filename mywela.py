@@ -1,6 +1,10 @@
 #!/usr/bin/python
+
+# Author: Surakarn Samkaew <tonkla@gmail.com>
+# Released under the MIT license.
  
 import datetime
+import os
 import sys
 
 from PySide import QtCore, QtGui, QtSql
@@ -54,10 +58,15 @@ class MainWidget(QtGui.QWidget):
                 created_at DATETIME)"
         query.exec_(q)
 
-        project = self.ui.cboProjects.currentText()
-        time_used = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
-        q = "INSERT INTO logs VALUES('%s', %d, '%s')" % (project, time_used, datetime.datetime.now())
+        project_name = self.ui.cboProjects.currentText()
+        q = "SELECT pid FROM projects WHERE name='%s'" % project_name
         query.exec_(q)
+        query.next()
+        project_id = query.value(0)
+        time_used = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
+        if time_used > 0:
+            q = "INSERT INTO logs VALUES(%d, %d, '%s')" % (project_id, time_used, datetime.datetime.now())
+            query.exec_(q)
 
         self.resetTimer()
 
@@ -98,6 +107,7 @@ class ProjectsManagementDialog(QtGui.QDialog):
 
         query = QtSql.QSqlQuery()
         q = "CREATE TABLE IF NOT EXISTS projects( \
+                pid INTEGER PRIMARY KEY AUTOINCREMENT, \
                 name VARCHAR(50) UNIQUE NOT NULL CHECK(name!=''), \
                 is_active BOOLEAN DEFAULT 1)"
         query.exec_(q)
@@ -106,12 +116,15 @@ class ProjectsManagementDialog(QtGui.QDialog):
         self.model.setTable("projects")
         self.model.setEditStrategy(QtSql.QSqlTableModel.OnManualSubmit)
         self.model.select()
-
-        self.model.setHeaderData(0, QtCore.Qt.Horizontal, "Project")
-        self.model.setHeaderData(1, QtCore.Qt.Horizontal, "Active")
+        #self.model.removeColumn(0) # removeColumn() is a BUG of Qt (last tested on v4.7.0)
+        self.model.setHeaderData(0, QtCore.Qt.Horizontal, "PID")
+        self.model.setHeaderData(1, QtCore.Qt.Horizontal, "Project")
+        self.model.setHeaderData(2, QtCore.Qt.Horizontal, "Active")
 
         self.ui.tableView.setModel(self.model)
+        self.ui.tableView.setColumnHidden(0, True) # use this to avoid removeColumn() bug
         self.ui.tableView.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
+        self.ui.tableView.resizeColumnsToContents()
 
     @QtCore.Slot()
     def on_btnNew_clicked(self):
@@ -143,8 +156,13 @@ class ProjectsManagementDialog(QtGui.QDialog):
 
 
 def connect_db():
+    data_dir = '%s/.mywela' % os.path.expanduser('~')
+    try:
+        os.mkdir(data_dir)
+    except:
+        pass
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
-    db.setDatabaseName('mywela.sqlite3')
+    db.setDatabaseName('%s/mywela.sqlite3' % data_dir)
     if not db.open():
         QtGui.QMessageBox.critical(None, QtGui.qApp.tr("Cannot open database"),
             QtGui.qApp.tr("Unable to establish a database connection.\n"
@@ -159,6 +177,5 @@ if not QtSql.QSqlDatabase.isOpen(QtSql.QSqlDatabase.database()):
 
 app = QtGui.QApplication(sys.argv)
 widget = MainWidget()
-#widget.setGeometry(200, 200, 470, 300)
 widget.show()
 sys.exit(app.exec_())
