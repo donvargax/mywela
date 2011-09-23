@@ -1,5 +1,7 @@
 **MyWela** is a simple project-based time tracking software that is powered by Qt and PySide. Even though it is made for a purpose of learning Qt and PySide, it is used on my daily use as a freelance developer. It still missed some useful features such as a report.
 
+![MyWela Screenshot](https://lh6.googleusercontent.com/--kU5hLB0s-4/TnwOM8lSxOI/AAAAAAAAAbs/kEo4BUBb0SA/s800/MyWela.png)
+
 Thanks <a href="http://forum.ubuntu-nl.org/etalage/pyqt4-stopwatch-(met-geluid-via-sdl)/">StopWatch (PyQt4)</a> for code examples.
 
 Prerequisite softwares:
