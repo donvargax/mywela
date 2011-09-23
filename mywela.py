@@ -51,15 +51,9 @@ class MainWidget(QtGui.QWidget):
 
     @QtCore.Slot()
     def on_btnSave_clicked(self):
-        query = QtSql.QSqlQuery()
-        q = "CREATE TABLE IF NOT EXISTS logs( \
-                project VARCHAR(50) NOT NULL, \
-                time_used INTEGER, \
-                created_at DATETIME)"
-        query.exec_(q)
-
         project_name = self.ui.cboProjects.currentText()
-        q = "SELECT pid FROM projects WHERE name='%s'" % project_name
+        q = "SELECT id FROM projects WHERE name='%s'" % project_name
+        query = QtSql.QSqlQuery()
         query.exec_(q)
         query.next()
         project_id = query.value(0)
@@ -104,13 +98,6 @@ class ProjectsManagementDialog(QtGui.QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
-        query = QtSql.QSqlQuery()
-        q = "CREATE TABLE IF NOT EXISTS projects( \
-                pid INTEGER PRIMARY KEY AUTOINCREMENT, \
-                name VARCHAR(50) UNIQUE NOT NULL CHECK(name!=''), \
-                is_active BOOLEAN DEFAULT 1)"
-        query.exec_(q)
 
         self.model =  QtSql.QSqlTableModel()
         self.model.setTable("projects")
@@ -172,8 +159,30 @@ def connect_db():
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.NoButton)
     return False
 
+def create_tables():
+    query = QtSql.QSqlQuery()
+    q = "CREATE TABLE IF NOT EXISTS projects( \
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
+            name VARCHAR(50) UNIQUE NOT NULL CHECK(name!=''), \
+            is_active BOOLEAN DEFAULT 1)"
+    query.exec_(q)
+
+    q = "CREATE TABLE IF NOT EXISTS logs( \
+            project_id INTEGER, \
+            time_used INTEGER, \
+            created_at DATETIME)"
+    query.exec_(q)
+
+    q = "CREATE INDEX IF NOT EXISTS idx_project_id ON logs(project_id)"
+    query.exec_(q)
+    q = "CREATE INDEX IF NOT EXISTS idx_created_at ON logs(created_at)"
+    query.exec_(q)
+    q = "CREATE INDEX IF NOT EXISTS idx_project_id_created_at ON logs(project_id, created_at)"
+    query.exec_(q)
+
 if not QtSql.QSqlDatabase.isOpen(QtSql.QSqlDatabase.database()):
     connect_db()
+    create_tables()
 
 app = QtGui.QApplication(sys.argv)
 widget = MainWidget()
