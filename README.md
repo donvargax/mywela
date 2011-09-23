@@ -5,9 +5,10 @@
 Thanks <a href="http://forum.ubuntu-nl.org/etalage/pyqt4-stopwatch-(met-geluid-via-sdl)/">StopWatch (PyQt4)</a> for code examples.
 
 Prerequisite softwares:
-  * Qt4 (tested on v4.7.0)
-  * PySide (tested on v1.0.6)
-  * SQLite3 (tested on v3.7.2)
+
+* Qt4 (tested on v4.7.0)
+* PySide (tested on v1.0.6)
+* SQLite3 (tested on v3.7.2)
 
 For PySide download and installation, please read [http://developer.qt.nokia.com/wiki/PySideDownloads](http://developer.qt.nokia.com/wiki/PySideDownloads)
 
