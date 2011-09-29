@@ -28,6 +28,10 @@ class MainWidget(QtGui.QWidget):
         self.timer = QtCore.QTimer()
         self.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateTime)
 
+        self.timeLog = QtCore.QTimer()
+        self.connect(self.timeLog, QtCore.SIGNAL("timeout()"), self.logTime)
+        self.timeLog.start(300000) # logs every 5 minutes
+
         self.model = QtSql.QSqlQueryModel()
         self.model.setQuery("SELECT name FROM projects WHERE is_active=1")
         self.ui.cboProjects.setModel(self.model)
@@ -90,6 +94,16 @@ class MainWidget(QtGui.QWidget):
         self.model.setQuery("SELECT name FROM projects WHERE is_active=1")
         self.ui.cboProjects.setModel(self.model)
 
+    def logTime(self):
+        data_dir = create_data_dir()
+        to_file = '%s/mywela.log' % data_dir
+        f = open(to_file, 'a')
+        time_used_str = self.elapsed.toString('hh:mm:ss')
+        time_used_int = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
+        text = '%s => %s (%s seconds)\n' % (datetime.datetime.now(), time_used_str, time_used_int)
+        f.write(text)
+        f.close()
+
 
 class ProjectsManagementDialog(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -143,11 +157,7 @@ class ProjectsManagementDialog(QtGui.QDialog):
 
 
 def connect_db():
-    data_dir = '%s/.mywela' % os.path.expanduser('~')
-    try:
-        os.mkdir(data_dir)
-    except:
-        pass
+    data_dir = create_data_dir()
     db = QtSql.QSqlDatabase.addDatabase('QSQLITE')
     db.setDatabaseName('%s/mywela.sqlite3' % data_dir)
     if not db.open():
@@ -158,6 +168,14 @@ def connect_db():
                           "how to build it.\n\nClick Cancel to exit."),
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.NoButton)
     return False
+
+def create_data_dir():
+    data_dir = '%s/.mywela' % os.path.expanduser('~')
+    try:
+        os.mkdir(data_dir)
+    except:
+        pass
+    return data_dir
 
 def create_tables():
     query = QtSql.QSqlQuery()
