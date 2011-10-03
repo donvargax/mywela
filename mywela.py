@@ -22,15 +22,12 @@ class MainWidget(QtGui.QWidget):
 
         self.ui.lcdTimer.display('00:00:00')
 
+        self.loggedTime = 0
         self.bufferedTime = 0
         self.elapsed = QtCore.QTime()
         self.time = QtCore.QTime()
         self.timer = QtCore.QTimer()
         self.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateTime)
-
-        self.timeLog = QtCore.QTimer()
-        self.connect(self.timeLog, QtCore.SIGNAL("timeout()"), self.logTime)
-        self.timeLog.start(300000) # logs every 5 minutes
 
         self.model = QtSql.QSqlQueryModel()
         self.model.setQuery("SELECT name FROM projects WHERE is_active=1")
@@ -61,9 +58,9 @@ class MainWidget(QtGui.QWidget):
         query.exec_(q)
         query.next()
         project_id = query.value(0)
-        time_used = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
-        if time_used > 0:
-            q = "INSERT INTO logs VALUES(%d, %d, '%s')" % (project_id, time_used, datetime.datetime.now())
+        used_time = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
+        if used_time > 0:
+            q = "INSERT INTO logs VALUES(%d, %d, '%s')" % (project_id, used_time, datetime.datetime.now())
             query.exec_(q)
 
         self.resetTimer()
@@ -90,19 +87,20 @@ class MainWidget(QtGui.QWidget):
         text = self.elapsed.toString('hh:mm:ss')
         self.ui.lcdTimer.display(text)
 
+        usedTime = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
+        if usedTime - self.loggedTime == 300: # logs every 5 minutes
+            self.loggedTime = usedTime
+            usedTimeStr = self.elapsed.toString('hh:mm:ss')
+            data_dir = create_data_dir()
+            to_file = '%s/mywela.log' % data_dir
+            f = open(to_file, 'a')
+            text = '%s => %s (%s seconds)\n' % (datetime.datetime.now(), usedTimeStr, usedTime)
+            f.write(text)
+            f.close()
+
     def updateProjectsList(self):
         self.model.setQuery("SELECT name FROM projects WHERE is_active=1")
         self.ui.cboProjects.setModel(self.model)
-
-    def logTime(self):
-        data_dir = create_data_dir()
-        to_file = '%s/mywela.log' % data_dir
-        f = open(to_file, 'a')
-        time_used_str = self.elapsed.toString('hh:mm:ss')
-        time_used_int = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
-        text = '%s => %s (%s seconds)\n' % (datetime.datetime.now(), time_used_str, time_used_int)
-        f.write(text)
-        f.close()
 
 
 class ProjectsManagementDialog(QtGui.QDialog):
@@ -187,7 +185,7 @@ def create_tables():
 
     q = "CREATE TABLE IF NOT EXISTS logs( \
             project_id INTEGER, \
-            time_used INTEGER, \
+            used_time INTEGER, \
             created_at DATETIME)"
     query.exec_(q)
 
