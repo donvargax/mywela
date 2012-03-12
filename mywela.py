@@ -198,11 +198,17 @@ def create_tables():
     q = "CREATE INDEX IF NOT EXISTS idx_project_id_created_at ON logs(project_id, created_at)"
     query.exec_(q)
 
-if not QtSql.QSqlDatabase.isOpen(QtSql.QSqlDatabase.database()):
-    connect_db()
-    create_tables()
 
-app = QtGui.QApplication(sys.argv)
-widget = MainWidget()
-widget.show()
-sys.exit(app.exec_())
+def main():
+    app = QtGui.QApplication(sys.argv)
+
+    if not QtSql.QSqlDatabase.isOpen(QtSql.QSqlDatabase.database()):
+        connect_db()
+        create_tables()
+
+    widget = MainWidget()
+    widget.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
