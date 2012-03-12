@@ -2,7 +2,7 @@
 
 # Author: Surakarn Samkaew <tonkla@gmail.com>
 # Released under the MIT license.
- 
+
 import datetime
 import os
 import sys
@@ -88,7 +88,7 @@ class MainWidget(QtGui.QWidget):
         self.ui.lcdTimer.display(text)
 
         usedTime = (self.elapsed.hour() * 60 * 60) + (self.elapsed.minute() * 60) + self.elapsed.second()
-        if usedTime - self.loggedTime == 300: # logs every 5 minutes
+        if usedTime - self.loggedTime == 300:  # logs every 5 minutes
             self.loggedTime = usedTime
             usedTimeStr = self.elapsed.toString('hh:mm:ss')
             data_dir = create_data_dir()
@@ -111,7 +111,7 @@ class ProjectsManagementDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.model =  QtSql.QSqlTableModel()
+        self.model = QtSql.QSqlTableModel()
         self.model.setTable("projects")
         self.model.setEditStrategy(QtSql.QSqlTableModel.OnManualSubmit)
         self.model.select()
@@ -121,7 +121,7 @@ class ProjectsManagementDialog(QtGui.QDialog):
         self.model.setHeaderData(2, QtCore.Qt.Horizontal, "Active")
 
         self.ui.tableView.setModel(self.model)
-        self.ui.tableView.setColumnHidden(0, True) # use this to avoid removeColumn() bug
+        self.ui.tableView.setColumnHidden(0, True)  # use this to avoid removeColumn() bug
         self.ui.tableView.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
         self.ui.tableView.resizeColumnsToContents()
 
@@ -167,6 +167,7 @@ def connect_db():
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.NoButton)
     return False
 
+
 def create_data_dir():
     data_dir = '%s/.mywela' % os.path.expanduser('~')
     try:
@@ -174,6 +175,7 @@ def create_data_dir():
     except:
         pass
     return data_dir
+
 
 def create_tables():
     query = QtSql.QSqlQuery()
